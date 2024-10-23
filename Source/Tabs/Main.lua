@@ -6,29 +6,26 @@ local tabs = {
 	{ text = "Selling",  value = "selling",  content = ATSellingTab },
 	{ text = "Options",  value = "options",  content = ATOptionsTab }
 }
+
+local function SelectGroup(container, event, group)
+	container:ReleaseChildren()
+	for _, tab in ipairs(tabs) do
+		if tab.value == group then
+			tab.content:Init(container)
+
+			break
+		end
+	end
+end
 function AT.Tabs:Init(parent)
 	--- Create Tabs ---
 	local tabGroup = AceGUI:Create("TabGroup")
 	tabGroup:SetLayout("Flow")
 	tabGroup:SetTabs(tabs)
 
-	tabGroup:SetCallback("OnGroupSelected", function(container, _, group)
-		AT.Tabs:SelectGroup(container, group)
-	end)
+	tabGroup:SetCallback("OnGroupSelected", SelectGroup)
 
 	parent:AddChild(tabGroup)
 
 	tabGroup:SelectTab("shopping")
-end
-
-function AT.Tabs:SelectGroup(container, group)
-	container:ReleaseChildren()
-	for _, tab in ipairs(tabs) do
-		if tab.value == group then
-			tab.content:Init(container)
-			container:DoLayout()
-
-			break
-		end
-	end
 end

@@ -20,6 +20,5 @@ function AuctionatorTools:RegisterEvents()
 end
 
 function AuctionatorTools:OnAuctionHouseShow()
-	self:CreateMainFrame()
 	self:CreateToggleButtons()
 end

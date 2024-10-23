@@ -1,23 +1,21 @@
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
 ATShoppingTab = {}
 
-ATShoppingTab.Modules = {
+ATShoppingTab.Widgets = {
 
-	ExportModule,
+	ExportWidget,
 
 }
 
 function ATShoppingTab:Init(container)
-	self.frame = AceGUI:Create("SimpleGroup")
-	self.frame:SetLayout("List")
-	self.frame:SetFullWidth(true)
-	self.frame:SetFullHeight(true)
+	local frame = AceGUI:Create("SimpleGroup")
+	frame:SetLayout("List")
+	frame:SetFullWidth(true)
+	frame:SetFullHeight(true)
 
-	container:AddChild(self.frame)
-	for _, module in ipairs(self.Modules) do
-		local moduleFrame = module:Init()
-		self.frame:AddChild(moduleFrame)
+	for _, widget in ipairs(self.Widgets) do
+		widget:DrawWidget(frame)
 	end
 
-	return self
+	container:AddChild(frame)
 end

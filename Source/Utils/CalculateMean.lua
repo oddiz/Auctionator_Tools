@@ -2,20 +2,31 @@
 function AhTools_CalculateMean(auctionDatas)
 	local quantity = 500
 
+	-- Return 0 if no auction data
+	if not auctionDatas or #auctionDatas == 0 then
+		return 0
+	end
+
 	local cumulativeCost = 0
 	local cumulativeQuantity = 0
-	local quantityIndex = 1
 
 	for _, auction in ipairs(auctionDatas) do
-		local newQuantity = cumulativeQuantity + auction.quantity
-		local newCost = cumulativeCost + (auction.quantity * auction.unitPrice)
-
-		cumulativeQuantity = newQuantity
-		cumulativeCost = newCost
-
-		if cumulativeQuantity >= quantity then
+		-- Calculate how much we need from this auction
+		local remainingNeeded = quantity - cumulativeQuantity
+		if remainingNeeded <= 0 then
 			break
 		end
+
+		-- Only take what we need from this auction
+		local quantityToTake = math.min(auction.quantity, remainingNeeded)
+
+		cumulativeQuantity = cumulativeQuantity + quantityToTake
+		cumulativeCost = cumulativeCost + (quantityToTake * auction.unitPrice)
+	end
+
+	-- Return 0 if we couldn't get any items
+	if cumulativeQuantity == 0 then
+		return 0
 	end
 
 	return math.floor(cumulativeCost / cumulativeQuantity)

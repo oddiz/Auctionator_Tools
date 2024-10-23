@@ -1,8 +1,9 @@
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
 local AceEvent = LibStub:GetLibrary("AceEvent-3.0")
-
+---@class ExportWidget
+ExportWidget = {}
 --TODO: Add custom top X price for mean price
-local searchPool = CreateObjectPool(
+ExportWidget.searchPool = CreateObjectPool(
 	function(pool)
 		local f = CreateFrame("Frame")
 		f = AceEvent:Embed(f)
@@ -13,13 +14,15 @@ local searchPool = CreateObjectPool(
 		f.exportWindow:SetWidth(200)
 		f.exportWindow:SetHeight(200)
 		f.exportWindow:SetLayout("Fill")
+		f.exportWindow.frame:SetFrameStrata("DIALOG")
+
 		f.editBox = AceGUI:Create("MultiLineEditBox")
 		f.exportWindow:AddChild(f.editBox)
 		f.editBox:SetFullWidth(true)
 		f.editBox:SetFullWidth(true)
 
 		f.editBox:SetLabel("Copy export output")
-		f.exportWindow:SetCallback("OnClose", function() f.abortSearch() end)
+		f.exportWindow:SetCallback("OnClose", function() pool:ReleaseAll() end)
 
 		f.exportWindow:Hide()
 		f.SetExportText = function(string)
@@ -40,9 +43,7 @@ local searchPool = CreateObjectPool(
 					end
 				end
 
-		f.abortSearch = function()
-			pool:ReleaseAll()
-		end
+
 		f.search =
 				function(callback)
 					local searchAmount = AhTools_TableLength(f.searchList)
@@ -53,7 +54,7 @@ local searchPool = CreateObjectPool(
 							local msgItemID = msgData[1]
 							local msgAuctionData = msgData[2]
 							local meanPrice = AhTools_CalculateMean(msgAuctionData)
-							if f.searchList[msgItemID] then
+							if f.searchList[msgItemID] and meanPrice then
 								f.resultList[msgItemID] = f.searchList[msgItemID]
 								f.resultList[msgItemID]["meanPrice"] = meanPrice
 							end
@@ -83,39 +84,40 @@ local searchPool = CreateObjectPool(
 )
 
 
----@class ExportModule: AtModule
-ExportModule = AtModule:New("Export Module")
-function ExportModule:Init()
+
+function ExportWidget:DrawWidget(container)
+	local moduleContainer = CreateATModule("Proper Export")
 	local button = AceGUI:Create("Button")
 	button:SetText("Export Results")
 	button:SetHeight(25)
 	button:SetCallback("OnClick", function(w)
-		searchPool:ReleaseAll()
+		self.searchPool:ReleaseAll()
 		self:ExportSearchResults()
 	end)
 
-	self.container:AddChild(button)
-
-	return self.container
+	moduleContainer:AddChild(button)
+	container:AddChild(moduleContainer)
 end
 
-function ExportModule:ExportSearchResults()
+function ExportWidget:ExportSearchResults()
 	local results = self:GetAuctionatorResults()
 	if (#results > 0) then
-		local newSearch = searchPool:Acquire()
+		local newSearch = self.searchPool:Acquire()
 
 		newSearch.addResults(results)
 
 		newSearch.search(
 			function(results)
-				local exportString = ExportModule:CreateExportString(results)
+				local exportString = ExportWidget:CreateExportString(results)
 
 				newSearch.SetExportText(exportString)
+				newSearch.editBox:SetFocus()
+				newSearch.editBox:HighlightText(1, string.len(exportString))
 			end)
 	end
 end
 
-function ExportModule:GetAuctionatorResults()
+function ExportWidget:GetAuctionatorResults()
 	if not AuctionatorShoppingFrame then
 		print("Shopping frame not found")
 	end
@@ -123,21 +125,37 @@ function ExportModule:GetAuctionatorResults()
 	return AuctionatorShoppingFrame.ResultsListing.dataProvider.results
 end
 
-function ExportModule:CreateExportString(results)
+function ExportWidget:CreateExportString(results)
+	-- Create a table for sorting
+	local sortableResults = {}
+
+	-- Convert the key-value pairs to a sortable array
+	for itemID, itemInfo in pairs(results) do
+		table.insert(sortableResults, {
+			id = itemID,
+			info = itemInfo,
+			name = itemInfo.name or "Unknown Item"
+		})
+	end
+
+	-- Sort the table alphabetically by name
+	table.sort(sortableResults, function(a, b)
+		return a.name:lower() < b.name:lower()
+	end)
+
 	local text = ""
 
 	-- Header
 	text = '"Price","Name","ItemID"' .. "\n"
 
-	for itemID, itemInfo in pairs(results) do
-		local itemName = itemInfo.name or "Unknown Item" -- Get just the name
+	for _, item in ipairs(sortableResults) do
 		local itemText = string.format('"%s","%s","%s"',
-			tostring(itemInfo.meanPrice),
-			itemName,
-			tostring(itemID)
+			tostring(item.info.meanPrice),
+			item.name,
+			tostring(item.id)
 		)
 		text = text .. itemText .. "\n"
-		cla(itemInfo)
 	end
+
 	return text
 end

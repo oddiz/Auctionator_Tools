@@ -8,7 +8,7 @@ function AT:CreateMainFrame()
 	local f = {}
 
 	f = AceGUI:Create("Frame")
-	f:SetTitle("Auctionator Helper")
+	f:SetTitle("Auctionator Tools")
 	f:SetStatusText("Useful utilities that will enchance goblin experience - made by oddiz")
 	f:SetWidth(400)
 	f:SetHeight(400)
@@ -38,5 +38,7 @@ end
 function AT:ToggleMainFrame()
 	if self.mainFrame then
 		if self.mainFrame:IsShown() then self.mainFrame:Hide() else self.mainFrame:Show() end
+	else
+		self:CreateMainFrame()
 	end
 end
