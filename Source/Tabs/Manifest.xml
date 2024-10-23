@@ -1,0 +1,9 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+https://raw.githubusercontent.com/Gethe/wow-ui-source/refs/heads/live/Interface/AddOns/Blizzard_SharedXML/UI.xsd">
+
+	<Script file= "Modules.lua" />
+	<Include file= "Shopping\Manifest.xml" />
+	<Include file= "Selling\Manifest.xml" />
+	<Include file= "Options\Manifest.xml" />
+	<Script file= "Main.lua" />
+</Ui>
