@@ -59,6 +59,18 @@
 		"CreateObjectPool",
 		"DevTool",
 		"AhTools_CalculateMean",
-		"TableUtil"
+		"TableUtil",
+		"SlashCmdList",
+		"Settings",
+		"ReloadUI",
+		"FrameStackTooltip_Toggle",
+		"SELECTED_CHAT_FRAME",
+		"SettingsPanel",
+		"EventUtil",
+		"StaticPopup_Show",
+		"ITEM_QUALITY_COLORS",
+		"StaticPopupDialogs",
+		"AuctionHouseFrame",
+		"AuctionatorSaleItemMixin"
 	]
 }

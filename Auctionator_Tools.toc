@@ -4,6 +4,7 @@
 ## Author: oddiz
 ## X-Category: Auction/Economy
 ## Notes: Some utilities to make your goblin life better.
+## SavedVariables: AuctionatorToolsDB
 
 # Libraries
 Libs\Manifest.xml

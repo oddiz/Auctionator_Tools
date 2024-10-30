@@ -1,9 +1,10 @@
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
+local _, addonNS = ...
 ATShoppingTab = {}
 
 ATShoppingTab.Widgets = {
 
-	ExportWidget,
+	addonNS.ExportWidget,
 
 }
 

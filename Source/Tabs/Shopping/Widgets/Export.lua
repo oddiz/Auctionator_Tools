@@ -1,7 +1,9 @@
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
 local AceEvent = LibStub:GetLibrary("AceEvent-3.0")
----@class ExportWidget
-ExportWidget = {}
+
+local _, addonNS = ...
+
+local ExportWidget = {}
 --TODO: Add custom top X price for mean price
 ExportWidget.searchPool = CreateObjectPool(
 	function(pool)
@@ -9,12 +11,10 @@ ExportWidget.searchPool = CreateObjectPool(
 		f = AceEvent:Embed(f)
 		f.searchList = {}
 		f.resultList = {}
-
 		f.exportWindow = AceGUI:Create("Window")
-		f.exportWindow:SetWidth(200)
-		f.exportWindow:SetHeight(200)
+		f.exportWindow:SetWidth(600)
+		f.exportWindow:SetHeight(600)
 		f.exportWindow:SetLayout("Fill")
-		f.exportWindow.frame:SetFrameStrata("DIALOG")
 
 		f.editBox = AceGUI:Create("MultiLineEditBox")
 		f.exportWindow:AddChild(f.editBox)
@@ -86,7 +86,7 @@ ExportWidget.searchPool = CreateObjectPool(
 
 
 function ExportWidget:DrawWidget(container)
-	local moduleContainer = CreateATModule("Proper Export")
+	local moduleContainer = addonNS.CreateATWidget("Proper Export")
 	local button = AceGUI:Create("Button")
 	button:SetText("Export Results")
 	button:SetHeight(25)
@@ -112,7 +112,7 @@ function ExportWidget:ExportSearchResults()
 
 				newSearch.SetExportText(exportString)
 				newSearch.editBox:SetFocus()
-				newSearch.editBox:HighlightText(1, string.len(exportString))
+				newSearch.editBox:HighlightText(0, string.len(exportString) - 1)
 			end)
 	end
 end
@@ -159,3 +159,5 @@ function ExportWidget:CreateExportString(results)
 
 	return text
 end
+
+addonNS.ExportWidget = ExportWidget

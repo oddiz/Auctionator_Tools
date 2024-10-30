@@ -1,4 +1,5 @@
 AuctionatorTools = {
+	Debug = {},
 	mainFrame = nil,
 	Tabs = {
 		Shopping = {},
@@ -9,5 +10,18 @@ AuctionatorTools = {
 	},
 	Config = {
 
+	}
+}
+
+ATDB_Defaults = {
+	profile = {
+		Shopping = {},
+		Selling = {
+			ImprovedSkip = {
+				skipToFirst = false,
+				skipEnabled = false,
+				skipIfLeadSeller = false
+			}
+		}
 	}
 }

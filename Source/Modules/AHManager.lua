@@ -53,8 +53,6 @@ end
 
 function AhManager:AddToQueue(itemID)
 	table.insert(self.queue, itemID)
-	cla("queue")
-	cla(self.queue)
 	self:ProcessNext()
 end
 
@@ -65,8 +63,6 @@ function AhManager:OnCommodityUpdated(items)
 end
 
 function AhManager:SearchCommodity(event, itemID)
-	cla("AhManager: message received")
-	cla(itemID)
 	if not AhManager:IsItemCommodity(itemID) then
 		print("Item to search is not commodity")
 		return
