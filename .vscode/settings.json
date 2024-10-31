@@ -71,6 +71,7 @@
 		"ITEM_QUALITY_COLORS",
 		"StaticPopupDialogs",
 		"AuctionHouseFrame",
-		"AuctionatorSaleItemMixin"
+		"AuctionatorSaleItemMixin",
+		"AuctionatorSellingFrame"
 	]
 }
