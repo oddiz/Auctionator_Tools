@@ -2,9 +2,12 @@
 ## Title: Auctionator Tools
 ## Version: r3
 ## Author: oddiz
-## X-Category: Auction/Economy
 ## Notes: Some utilities to make your goblin life better.
 ## SavedVariables: AuctionatorToolsDB
+
+## X-Category: Auction/Economy
+## X-License: All Rights Reserved
+## X-Website: https://github.com/oddiz
 
 # Libraries
 Libs\Manifest.xml
