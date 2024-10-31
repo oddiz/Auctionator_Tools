@@ -1,6 +1,6 @@
 ## Interface: 110000, 110005
 ## Title: Auctionator Tools
-## Version: 11.0.12.1
+## Version: 11.0.12.2
 ## Author: oddiz
 ## X-Category: Auction/Economy
 ## Notes: Some utilities to make your goblin life better.

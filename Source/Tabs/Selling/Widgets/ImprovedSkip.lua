@@ -4,13 +4,22 @@ local AceDB = LibStub:GetLibrary("AceDB-3.0")
 local ImprovedSkip = {}
 
 local Debug = AuctionatorTools.Debug.Message
+
+local function skipIfLeadSellerLabel(skipEnabled)
+	if skipEnabled then
+		return "Skip if you are the lead seller"
+	else
+		return "Refresh until undercut"
+	end
+end
+
 function ImprovedSkip:DrawWidget(container)
 	self.widgetSettings = AuctionatorTools.db.profile.Selling.ImprovedSkip
 
 	local moduleContainer = addonNS.CreateATWidget("Improved Skip")
 
 	local cbSkipEnabled = AceGUI:Create("CheckBox")
-	cbSkipEnabled:SetLabel("Auto Skip")
+	cbSkipEnabled:SetLabel("Auto skip to next item")
 	cbSkipEnabled:SetValue(self.widgetSettings.skipEnabled or false)
 
 	local cbSkipToFirst = AceGUI:Create("CheckBox")
@@ -18,7 +27,8 @@ function ImprovedSkip:DrawWidget(container)
 	cbSkipToFirst:SetValue(self.widgetSettings.skipToFirst or false)
 
 	local cbSkipIfLeadSeller = AceGUI:Create("CheckBox")
-	cbSkipIfLeadSeller:SetLabel("Skip if you are the lead seller")
+	local siflsLabel = skipIfLeadSellerLabel(self.widgetSettings.skipEnabled or false)
+	cbSkipIfLeadSeller:SetLabel(siflsLabel)
 	cbSkipIfLeadSeller:SetValue(self.widgetSettings.skipIfLeadSeller or false)
 
 	moduleContainer:AddChild(cbSkipEnabled)
@@ -27,14 +37,14 @@ function ImprovedSkip:DrawWidget(container)
 
 	container:AddChild(moduleContainer)
 
-	cbSkipToFirst:SetCallback("OnValueChanged", function(cb)
-		ImprovedSkip.widgetSettings.skipToFirst = cb:GetValue()
-		Debug("New value for skipToFirst ", ImprovedSkip.GetSetting("skipToFirst"))
-	end)
-
 	cbSkipEnabled:SetCallback("OnValueChanged", function(cb)
 		ImprovedSkip.widgetSettings.skipEnabled = cb:GetValue()
 		Debug("New value for skipEnabled ", ImprovedSkip.GetSetting("skipEnabled"))
+		cbSkipIfLeadSeller:SetLabel(skipIfLeadSellerLabel(ImprovedSkip.GetSetting("skipEnabled")))
+	end)
+	cbSkipToFirst:SetCallback("OnValueChanged", function(cb)
+		ImprovedSkip.widgetSettings.skipToFirst = cb:GetValue()
+		Debug("New value for skipToFirst ", ImprovedSkip.GetSetting("skipToFirst"))
 	end)
 	cbSkipIfLeadSeller:SetCallback("OnValueChanged",
 		function(cb)
@@ -48,14 +58,18 @@ function ImprovedSkip.GetSetting(settingName)
 			[settingName]
 end
 
-function ImprovedSkip.InjectToAuctionator()
+function ImprovedSkip.InjectToAuctionator(originalMixin)
 	if not AuctionatorSaleItemMixin then
-		print("Couldn't find AuctionatorSaleItemMixin")
+		Debug("Couldn't find AuctionatorSaleItemMixin")
 		return
 	end
+	Debug("Setting auto select next to false")
 	Auctionator.Config.Set(Auctionator.Config.Options.SELLING_AUTO_SELECT_NEXT, false)
-	local mixin = Mixin(AuctionatorSaleItemMixin)
+
+
+	Debug("Injecting Improved Skip Functions")
 	function AuctionatorSaleItemMixin:GetFirstItem()
+		Debug("AuctionatorSaleItemMixin GetFirstItem()")
 		local firstItem = nil
 		local frame = AuctionatorSellingFrame
 		local bagListing = frame.BagListing
@@ -75,6 +89,7 @@ function ImprovedSkip.InjectToAuctionator()
 	end
 
 	function AuctionatorSaleItemMixin:GetLastItem()
+		Debug("AuctionatorSaleItemMixin GetLastItem()")
 		local lastItem = nil
 		local frame = AuctionatorSellingFrame
 		local bagListing = frame.BagListing
@@ -110,35 +125,39 @@ function ImprovedSkip.InjectToAuctionator()
 	end
 
 	-- Skip logic
-	function AuctionatorSaleItemMixin:SkipItem(...)
+	function AuctionatorSaleItemMixin:SkipItem(itemID)
+		Debug("AuctionatorSaleItemMixin SkipItem(itemID)", itemID)
 		local SALE_ITEM_EVENTS = {
 			Auctionator.AH.Events.CommoditySearchResultsReady,
 			Auctionator.AH.Events.ItemSearchResultsReady,
 		}
-		local itemID = ...
 		local itemInfo = self.itemInfo or self.lastItemInfo
-		if itemInfo.itemID ~= itemID then return end
+
+		if itemID and itemInfo.itemID ~= itemID then return end
 		local isSkipEnabled = addonNS.ImprovedSkip.GetSetting("skipEnabled")
 
 		if not isSkipEnabled then
+			Debug("Skip disabled selecting last item")
 			-- Skip is disabled
 			Auctionator.EventBus:Fire(
-				self, Auctionator.Selling.Events.BagItemRequest, self.lastKey
+				self, Auctionator.Selling.Events.BagItemRequest, itemInfo.key
 			)
 			return
 		else
 			-- Skip is enabled
-			if self.nextItem then
+			if itemInfo.nextItem then
+				Debug("Skipping to next item")
 				Auctionator.EventBus:Fire(
-					self, Auctionator.Selling.Events.BagItemRequest, self.nextItem
+					self, Auctionator.Selling.Events.BagItemRequest, itemInfo.nextItem
 				)
 				return
 			end
 			local lastItem = self:GetLastItem()
 
-			local atLastItem = lastItem and lastItem.sortKey == self.itemInfo.sortKey
+			local atLastItem = lastItem and (lastItem.sortKey == itemInfo.sortKey)
 			if atLastItem and addonNS.ImprovedSkip.GetSetting("skipToFirst") then
 				-- if atLastItem
+				Debug("Skipping to first item")
 				local firstItem = self:GetFirstItem()
 				Auctionator.EventBus:Fire(
 					self, Auctionator.Selling.Events.BagItemRequest, firstItem
@@ -150,8 +169,9 @@ function ImprovedSkip.InjectToAuctionator()
 	end
 
 	-- Skip if undercut
-	local ProcessCommodityResults_old = mixin.ProcessCommodityResults
+	local ProcessCommodityResults_old = originalMixin.ProcessCommodityResults
 	function AuctionatorSaleItemMixin:ProcessCommodityResults(itemID, ...)
+		Debug("Processing commodity results", itemID)
 		ProcessCommodityResults_old(self, itemID, ...)
 		if addonNS.ImprovedSkip.GetSetting("skipIfLeadSeller") then
 			local result = self:GetCommodityResult(itemID)
@@ -161,16 +181,17 @@ function ImprovedSkip.InjectToAuctionator()
 				self:SkipItem(itemID)
 			else
 				Debug("Auction is undercutted")
-				DevTool:AddData(result)
 			end
 		end
 	end
 
-	-- Skip after posting
-	local PostItem_old = mixin.PostItem
+	local PostItem_old = originalMixin.PostItem
 
 	function AuctionatorSaleItemMixin:PostItem(confirmed)
+		Debug("AuctionatorSaleItemMixin PostItem(confirmed)", confirmed)
 		PostItem_old(self, confirmed)
+		local postedItemID = self.lastItemInfo.itemID
+		self:SkipItem(postedItemID)
 	end
 end
 

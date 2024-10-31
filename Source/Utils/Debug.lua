@@ -1,5 +1,5 @@
 function AuctionatorTools.Debug.IsOn()
-	return true
+	return AuctionatorTools.Config.Debug
 end
 
 function AuctionatorTools.Debug.Message(message, ...)
