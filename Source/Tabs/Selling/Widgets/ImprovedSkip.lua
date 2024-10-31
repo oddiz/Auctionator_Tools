@@ -23,7 +23,7 @@ function ImprovedSkip:DrawWidget(container)
 	cbSkipEnabled:SetValue(self.widgetSettings.skipEnabled or false)
 
 	local cbSkipToFirst = AceGUI:Create("CheckBox")
-	cbSkipToFirst:SetLabel("Loop to first item")
+	cbSkipToFirst:SetLabel("Loop back to first item")
 	cbSkipToFirst:SetValue(self.widgetSettings.skipToFirst or false)
 
 	local cbSkipIfLeadSeller = AceGUI:Create("CheckBox")
@@ -114,14 +114,9 @@ function ImprovedSkip.InjectToAuctionator(originalMixin)
 	function AuctionatorSaleItemMixin:UpdateSkipButtonState()
 		if not self.SkipButton:IsShown() then
 			self.SkipButton:Show()
+			self.SkipButton:SetEnabled(true)
 		end
-		if ImprovedSkip.GetSetting("skipEnabled") then
-			local skipToFirst = addonNS.ImprovedSkip.GetSetting("skipToFirst")
-			self.SkipButton:SetEnabled(self.SkipButton:IsShown() and (self.nextItem or skipToFirst))
-			self.PrevButton:SetEnabled(self.SkipButton:IsShown() and self.prevItem)
-		else
-			self.SkipButton:SetEnabled(false)
-		end
+		self.PrevButton:SetEnabled(self.PrevButton:IsShown() and self.prevItem)
 	end
 
 	-- Skip logic
@@ -134,17 +129,13 @@ function ImprovedSkip.InjectToAuctionator(originalMixin)
 		local itemInfo = self.itemInfo or self.lastItemInfo
 
 		if itemID and itemInfo.itemID ~= itemID then return end
+
+		local isManualClick = not itemID
+
 		local isSkipEnabled = addonNS.ImprovedSkip.GetSetting("skipEnabled")
 
-		if not isSkipEnabled then
-			Debug("Skip disabled selecting last item")
-			-- Skip is disabled
-			Auctionator.EventBus:Fire(
-				self, Auctionator.Selling.Events.BagItemRequest, itemInfo.key
-			)
-			return
-		else
-			-- Skip is enabled
+		if isSkipEnabled or isManualClick then
+			-- Skip is enabled or skip button manually clicked
 			if itemInfo.nextItem then
 				Debug("Skipping to next item")
 				Auctionator.EventBus:Fire(
@@ -165,6 +156,13 @@ function ImprovedSkip.InjectToAuctionator(originalMixin)
 
 				return
 			end
+		else
+			Debug("Skip disabled selecting last item")
+			-- Skip is disabled
+			Auctionator.EventBus:Fire(
+				self, Auctionator.Selling.Events.BagItemRequest, itemInfo.key
+			)
+			return
 		end
 	end
 

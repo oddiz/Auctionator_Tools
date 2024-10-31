@@ -9,7 +9,7 @@ AuctionatorTools = {
 		}
 	},
 	Config = {
-		Debug = false
+		Debug = true
 	}
 }
 
