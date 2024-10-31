@@ -16,6 +16,7 @@ function AuctionatorTools:OnInitialize()
 	self:NewModule("AhManager", AhManager, "AceEvent-3.0", "AceBucket-3.0")
 	self.originalSaleItem = Mixin(AuctionatorSaleItemMixin, {})
 	addonNS.ImprovedSkip.InjectToAuctionator(self.originalSaleItem)
+	addonNS.ImprovedQuantity.InjectToAuctionator(self.originalSaleItem)
 end
 
 function AuctionatorTools:RegisterEvents()

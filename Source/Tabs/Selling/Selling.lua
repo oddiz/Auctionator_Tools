@@ -5,6 +5,7 @@ ATSellingTab = {}
 ATSellingTab.Widgets = {
 
 	addonNS.ImprovedSkip,
+	addonNS.ImprovedQuantity
 
 }
 
@@ -15,7 +16,9 @@ function ATSellingTab:Init(container)
 	frame:SetFullHeight(true)
 
 	for _, widget in ipairs(self.Widgets) do
-		widget:DrawWidget(frame)
+		if widget.DrawWidget then
+			widget:DrawWidget(frame)
+		end
 	end
 
 	container:AddChild(frame)

@@ -1,15 +1,20 @@
 local _, addonNS = ...
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
-local AceDB = LibStub:GetLibrary("AceDB-3.0")
 local ImprovedQuantity = {}
 
 local Debug = AuctionatorTools.Debug.Message
 local function restockQtyLabel()
-	local undercutSkipActive = AuctionatorTools.db.profile.Selling.ImprovedQuantity.skipIfLeadSeller or false
+	local undercutSkipActive = AuctionatorTools.db.profile.Selling.ImprovedSkip.skipIfLeadSeller or false
 	if undercutSkipActive then
-		return GRAY_FONT_COLOR:WrapTextInColorCode("Restock posted auction (Disabled: Skipping non-undercutted auctions)")
+		return {
+			label = RED_FONT_COLOR:WrapTextInColorCode("Restock posted auction"),
+			desc = GRAY_FONT_COLOR:WrapTextInColorCode("Disabled: Skipping non-undercutted auctions)")
+		}
 	else
-		return "Restock posted auction"
+		return {
+			label = "Restock posted auction",
+			desc = ""
+		}
 	end
 end
 function ImprovedQuantity:DrawWidget(container)
@@ -17,10 +22,8 @@ function ImprovedQuantity:DrawWidget(container)
 	local moduleContainer = addonNS.CreateATWidget("Improved Quantity")
 
 	local cbRestock = AceGUI:Create("CheckBox")
-	cbRestock:SetLabel(restockQtyLabel())
 	cbRestock:SetValue(self.widgetSettings.restockQty or false)
-
-
+	cbRestock:SetFullHeight(true)
 
 	moduleContainer:AddChild(cbRestock)
 
@@ -29,8 +32,18 @@ function ImprovedQuantity:DrawWidget(container)
 	cbRestock:SetCallback("OnValueChanged", function(cb)
 		ImprovedQuantity.widgetSettings.restockQty = cb:GetValue()
 		Debug("New value for restockQty ", ImprovedQuantity.GetSetting("restockQty"))
-		cbRestock:SetLabel(restockQtyLabel())
+		self.updateCbRestockLabel()
 	end)
+	self.updateCbRestockLabel = function()
+		cbRestock:SetLabel(restockQtyLabel().label)
+		cbRestock:SetDescription(restockQtyLabel().desc)
+	end
+	self.updateCbRestockLabel()
+end
+
+function ImprovedQuantity.GetSetting(settingName)
+	return AuctionatorTools.db.profile.Selling.ImprovedQuantity
+			[settingName]
 end
 
 function ImprovedQuantity.SaveQuantity(itemID, amount)
@@ -53,50 +66,71 @@ function ImprovedQuantity.GetQuantity(itemID)
 end
 
 function ImprovedQuantity.InjectToAuctionator(originalMixin)
+	local OnShow_org = originalMixin.OnShow
+
+	function AuctionatorSaleItemMixin:OnShow()
+		OnShow_org(self)
+
+		self:CreateSaveQtyButton()
+	end
+
+	-------------------------------------------------
 	function AuctionatorSaleItemMixin:CreateSaveQtyButton()
+		Debug("Creating save quantity button")
 		-- Create save button
 		local maxButton = self.MaxButton
 
 		if not maxButton then
 			Debug("Max button not found")
 		else
-			self.SaveButton = AceGUI:Create("Button")
-			self.SaveButton:SetWidth(100)
-			self.SaveButton:SetParent(maxButton)
-			self.SaveButton:SetPoint("TOP", maxButton, "BOTTOM", 0, 5)
+			if self.SaveButton then
+				Debug("Save button already exists")
+				return
+			end
+			self.SaveButton = CreateFrame("Button", "SaveQtyButton", self, "UIPanelButtonTemplate")
+			self.SaveButton:SetSize(130, 25)
+			self.SaveButton:SetPoint("BOTTOMLEFT", maxButton, "TOP", 0, 5)
 			self.SaveButton:SetText("Save Quantity")
-
-			self.SaveButton:OnClick(function()
+			self.SaveButton:RegisterForClicks("AnyUp", "AnyDown")
+			self.SaveButton:SetScript("OnClick", function(_, button, down)
 				local currentQuantity = self.Quantity:GetNumber()
 				local currentItemID = self.itemInfo.itemID
 
 				if currentQuantity and currentItemID then
 					local result = ImprovedQuantity.SaveQuantity(currentItemID, currentQuantity)
-
-					local orgText = self.SaveButton:GetText()
-					self.SaveButton:SetText(string.format("%s %s", orgText, (result and "Saved") or "Failed"))
+					if down then
+						self.SaveButton:SetText((result and "Saved") or ("Failed"))
+					else
+						self.SaveButton:SetText("Save Quantity - " .. currentQuantity)
+					end
 				end
 			end)
 		end
 	end
 
 	----------------------------------------------------------
+
+	-- Set quantity logic
 	local SetQuantity_org = originalMixin.SetQuantity
 	function AuctionatorSaleItemMixin:SetQuantity()
 		local itemID = self.itemInfo.itemID
 		local customQuantity = itemID and ImprovedQuantity.GetQuantity(itemID)
 
 		if customQuantity then
+			self.SaveButton:SetText("Save Quantity - " .. customQuantity)
 			local result = self:GetCommodityResult(itemID)
 			Debug("checking if undercutted for" .. itemID)
-			if result and result.containsOwnerItem and result.owners[1] == "player" then
+			if result and result.containsOwnerItem and result.owners[1] == "player" and ImprovedQuantity.widgetSettings.restockQty then
 				Debug("Auction not undercutted")
 				self.Quantity:SetNumber(customQuantity - result.quantity)
 			else
 				self.Quantity:SetNumber(customQuantity)
 			end
 		else
+			self.SaveButton:SetText("Save Quantity")
 			SetQuantity_org(self)
 		end
 	end
 end
+
+addonNS.ImprovedQuantity = ImprovedQuantity

@@ -50,6 +50,7 @@ function ImprovedSkip:DrawWidget(container)
 		function(cb)
 			self.widgetSettings.skipIfLeadSeller = cb:GetValue()
 			Debug("New value for skipIfLeadSeller ", ImprovedSkip.GetSetting("skipIfLeadSeller"))
+			addonNS.ImprovedQuantity.updateCbRestockLabel()
 		end)
 end
 
