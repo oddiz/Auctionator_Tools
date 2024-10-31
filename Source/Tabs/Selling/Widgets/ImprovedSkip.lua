@@ -111,6 +111,11 @@ function ImprovedSkip.InjectToAuctionator(originalMixin)
 		return lastItem
 	end
 
+	function AuctionatorSaleItemMixin:UpdateSkipButton()
+		self.PostButton:SetSize(114, 22)
+		self.SkipButton:Show()
+	end
+
 	function AuctionatorSaleItemMixin:UpdateSkipButtonState()
 		if not self.SkipButton:IsShown() then
 			self.SkipButton:Show()
