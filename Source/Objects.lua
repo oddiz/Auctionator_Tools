@@ -14,6 +14,11 @@ AuctionatorTools = {
 }
 
 ATDB_Defaults = {
+	global = {
+		quantity = {
+
+		}
+	},
 	profile = {
 		Shopping = {},
 		Selling = {
@@ -21,6 +26,9 @@ ATDB_Defaults = {
 				skipToFirst = false,
 				skipEnabled = false,
 				skipIfLeadSeller = false
+			},
+			ImprovedQuantity = {
+				restockQty = true
 			}
 		}
 	}
