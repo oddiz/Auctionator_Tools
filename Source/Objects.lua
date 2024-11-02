@@ -20,7 +20,9 @@ ATDB_Defaults = {
 		}
 	},
 	profile = {
-		Shopping = {},
+		Shopping = {
+			meanQty = 400
+		},
 		Selling = {
 			SkipLogic = {
 				masterSwitch = false,

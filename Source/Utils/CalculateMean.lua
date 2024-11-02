@@ -1,6 +1,6 @@
 ---@diagnostic disable: lowercase-global
-function AhTools_CalculateMean(auctionDatas)
-	local quantity = 500
+function AhTools_CalculateMean(auctionDatas, quantity)
+	if not quantity then quantity = 500 end
 
 	-- Return 0 if no auction data
 	if not auctionDatas or #auctionDatas == 0 then
