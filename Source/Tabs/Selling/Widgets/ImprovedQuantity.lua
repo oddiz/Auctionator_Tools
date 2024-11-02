@@ -3,42 +3,25 @@ local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
 local ImprovedQuantity = {}
 
 local Debug = AuctionatorTools.Debug.Message
-local function restockQtyLabel()
-	local undercutSkipActive = AuctionatorTools.db.profile.Selling.ImprovedSkip.skipIfLeadSeller or false
-	if undercutSkipActive then
-		return {
-			label = RED_FONT_COLOR:WrapTextInColorCode("Restock posted auction"),
-			desc = GRAY_FONT_COLOR:WrapTextInColorCode("Disabled: Skipping non-undercutted auctions)")
-		}
-	else
-		return {
-			label = "Restock posted auction",
-			desc = ""
-		}
-	end
-end
+
 function ImprovedQuantity:DrawWidget(container)
-	self.widgetSettings = AuctionatorTools.db.profile.Selling.ImprovedQuantity
 	local moduleContainer = addonNS.CreateATWidget("Improved Quantity")
 
-	local cbRestock = AceGUI:Create("CheckBox")
-	cbRestock:SetValue(self.widgetSettings.restockQty or false)
-	cbRestock:SetFullHeight(true)
+	moduleContainer:SetLayout("Flow")
+	--------------------------------------------
+	local cbUseCustomQty = AceGUI:Create("CheckBox")
+	cbUseCustomQty:SetValue(AuctionatorTools.db.profile.Selling.ImprovedQuantity.useCustomQty or false)
+	cbUseCustomQty:SetRelativeWidth(1)
+	cbUseCustomQty:SetLabel("Use Custom Qty")
+	moduleContainer:AddChild(cbUseCustomQty)
 
-	moduleContainer:AddChild(cbRestock)
+	cbUseCustomQty:SetCallback("OnValueChanged", function(cb)
+		AuctionatorTools.db.profile.Selling.ImprovedQuantity.useCustomQty = cb:GetValue()
+		Debug("New value for useCustomQty ", cb:GetValue())
+	end)
+
 
 	container:AddChild(moduleContainer)
-
-	cbRestock:SetCallback("OnValueChanged", function(cb)
-		ImprovedQuantity.widgetSettings.restockQty = cb:GetValue()
-		Debug("New value for restockQty ", ImprovedQuantity.GetSetting("restockQty"))
-		self.updateCbRestockLabel()
-	end)
-	self.updateCbRestockLabel = function()
-		cbRestock:SetLabel(restockQtyLabel().label)
-		cbRestock:SetDescription(restockQtyLabel().desc)
-	end
-	self.updateCbRestockLabel()
 end
 
 function ImprovedQuantity.GetSetting(settingName)
@@ -58,7 +41,7 @@ function ImprovedQuantity.SaveQuantity(itemID, amount)
 	end
 end
 
-function ImprovedQuantity.GetQuantity(itemID)
+function ImprovedQuantity.GetSavedQuantity(itemID)
 	local qtyDB = AuctionatorTools.db.global.quantity
 	if qtyDB and itemID then
 		return qtyDB[itemID]
@@ -101,7 +84,7 @@ function ImprovedQuantity.InjectToAuctionator(originalMixin)
 					if down then
 						self.SaveButton:SetText((result and "Saved") or ("Failed"))
 					else
-						self.SaveButton:SetText("Save Quantity - " .. currentQuantity)
+						self.SaveButton:SetText("Saved Qty - " .. currentQuantity)
 					end
 				end
 			end)
@@ -113,14 +96,15 @@ function ImprovedQuantity.InjectToAuctionator(originalMixin)
 	-- Set quantity logic
 	local SetQuantity_org = originalMixin.SetQuantity
 	function AuctionatorSaleItemMixin:SetQuantity()
+		if not self.itemInfo then return end
 		local itemID = self.itemInfo.itemID
-		local customQuantity = itemID and ImprovedQuantity.GetQuantity(itemID)
+		local customQuantity = self.itemInfo and SkipLogic:GetSavedQuantity(self.itemInfo)
 
 		if customQuantity then
-			self.SaveButton:SetText("Save Quantity - " .. customQuantity)
+			self.SaveButton:SetText("Saved Qty - " .. customQuantity)
 			local result = self:GetCommodityResult(itemID)
 			Debug("checking if undercutted for" .. itemID)
-			if result and result.containsOwnerItem and result.owners[1] == "player" and ImprovedQuantity.widgetSettings.restockQty then
+			if result and result.containsOwnerItem and result.owners[1] == "player" and AuctionatorTools.db.profile.Selling.ImprovedSkip.restockEnabled then
 				Debug("Auction not undercutted")
 				self.Quantity:SetNumber(customQuantity - result.quantity)
 			else

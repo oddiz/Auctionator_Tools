@@ -22,13 +22,15 @@ ATDB_Defaults = {
 	profile = {
 		Shopping = {},
 		Selling = {
-			ImprovedSkip = {
-				skipToFirst = false,
-				skipEnabled = false,
-				skipIfLeadSeller = false
+			SkipLogic = {
+				masterSwitch = false,
+				processUndercut = false,
+				restockEnabled = false,
+				restockThreshold = 0.5,
+				preference = "SKIP", -- "SKIP" or "REFRESH"
 			},
 			ImprovedQuantity = {
-				restockQty = true
+				useCustomQty = true
 			}
 		}
 	}

@@ -14,8 +14,8 @@ function AuctionatorTools:OnInitialize()
 	self.db = LibStub("AceDB-3.0"):New("AuctionatorToolsDB", ATDB_Defaults)
 	self:RegisterEvents()
 	self:NewModule("AhManager", AhManager, "AceEvent-3.0", "AceBucket-3.0")
+	self:NewModule("SkipLogic", SkipLogic)
 	self.originalSaleItem = Mixin(AuctionatorSaleItemMixin, {})
-	addonNS.ImprovedSkip.InjectToAuctionator(self.originalSaleItem)
 	addonNS.ImprovedQuantity.InjectToAuctionator(self.originalSaleItem)
 end
 

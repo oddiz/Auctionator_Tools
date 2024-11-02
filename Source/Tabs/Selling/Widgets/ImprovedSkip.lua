@@ -1,6 +1,5 @@
 local _, addonNS = ...
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
-local AceDB = LibStub:GetLibrary("AceDB-3.0")
 local ImprovedSkip = {}
 
 local Debug = AuctionatorTools.Debug.Message
@@ -14,189 +13,118 @@ local function skipIfLeadSellerLabel(skipEnabled)
 end
 
 function ImprovedSkip:DrawWidget(container)
-	self.widgetSettings = AuctionatorTools.db.profile.Selling.ImprovedSkip
+	local SkipLogicModule = AuctionatorTools:GetModule("SkipLogic")
 
 	local moduleContainer = addonNS.CreateATWidget("Improved Skip")
+	--------------------------------------------
+	local cbMasterSwitch = AceGUI:Create("CheckBox")
+	cbMasterSwitch:SetLabel("Master switch")
+	cbMasterSwitch:SetValue(SkipLogicModule:GetSetting("masterSwitch") or false)
+	cbMasterSwitch:SetFullWidth(true)
+	--------------------------------------------
 
-	local cbSkipEnabled = AceGUI:Create("CheckBox")
-	cbSkipEnabled:SetLabel("Auto skip to next item")
-	cbSkipEnabled:SetValue(self.widgetSettings.skipEnabled or false)
+	local preference = SkipLogicModule:GetSetting("preference")
+	local cbProcessUndercut = AceGUI:Create("CheckBox")
+	cbProcessUndercut:SetLabel("Act on undercut items")
+	cbProcessUndercut:SetValue(SkipLogicModule:GetSetting("processUndercut") or false)
+	cbProcessUndercut:SetLabel(string.format("%s on undercut items",
+		GREEN_FONT_COLOR:WrapTextInColorCode(preference)))
+	cbProcessUndercut:SetFullWidth(true)
+	--------------------------------------------
 
-	local cbSkipToFirst = AceGUI:Create("CheckBox")
-	cbSkipToFirst:SetLabel("Loop back to first item")
-	cbSkipToFirst:SetValue(self.widgetSettings.skipToFirst or false)
+	local restockGroup = AceGUI:Create("SimpleGroup")
+	restockGroup:SetLayout("Flow")
+	restockGroup:SetFullWidth(true)
+	local cbRestockEnabled = AceGUI:Create("CheckBox")
+	cbRestockEnabled:SetValue(SkipLogicModule:GetSetting("restockEnabled") or false)
+	cbRestockEnabled:SetRelativeWidth(0.3)
+	cbRestockEnabled:SetLabel("Restock")
 
-	local cbSkipIfLeadSeller = AceGUI:Create("CheckBox")
-	local siflsLabel = skipIfLeadSellerLabel(self.widgetSettings.skipEnabled or false)
-	cbSkipIfLeadSeller:SetLabel(siflsLabel)
-	cbSkipIfLeadSeller:SetValue(self.widgetSettings.skipIfLeadSeller or false)
+	cbRestockEnabled:SetCallback("OnValueChanged", function(cb)
+		ImprovedSkip.widgetSettings.restockEnabled = cb:GetValue()
+		Debug("New value for restockEnabled ", SkipLogicModule:GetSetting("restockEnabled"))
+	end)
 
-	moduleContainer:AddChild(cbSkipEnabled)
-	moduleContainer:AddChild(cbSkipToFirst)
-	moduleContainer:AddChild(cbSkipIfLeadSeller)
+	local sliderRestock = AceGUI:Create("Slider")
+	sliderRestock:SetRelativeWidth(0.7)
+	sliderRestock:SetSliderValues(0, 1, 0.01)
+	sliderRestock:SetIsPercent(true)
+	sliderRestock:SetValue(SkipLogicModule:GetSetting("restockThreshold"))
+	sliderRestock:SetDisabled(not SkipLogicModule:GetSetting("restockEnabled"))
+
+	restockGroup:AddChild(cbRestockEnabled)
+	restockGroup:AddChild(sliderRestock)
+	--------------------------------------------
+
+	local groupSelectAction = AceGUI:Create("InlineGroup")
+	groupSelectAction:SetFullWidth(true)
+	groupSelectAction:SetLayout("Flow")
+	groupSelectAction:SetTitle("Select action")
+
+	local function getActionPref()
+		return SkipLogicModule:GetSetting("preference")
+	end
+
+
+
+	local radioSkip = AceGUI:Create("CheckBox")
+	radioSkip:SetType("radio")
+	radioSkip:SetLabel("Skip")
+	radioSkip:SetValue(getActionPref() == "SKIP")
+	radioSkip:SetRelativeWidth(0.5)
+
+	local radioRefresh = AceGUI:Create("CheckBox")
+	radioRefresh:SetType("radio")
+	radioRefresh:SetLabel("Refresh")
+	radioRefresh:SetValue(getActionPref() == "REFRESH")
+	radioRefresh:SetRelativeWidth(0.5)
+
+	local function handleSelect(type)
+		if type == "SKIP" then
+			SkipLogicModule:SetSetting("preference", "SKIP")
+			radioSkip:SetValue(true)
+			radioRefresh:SetValue(false)
+		elseif type == "REFRESH" then
+			SkipLogicModule:SetSetting("preference", "REFRESH")
+			radioSkip:SetValue(false)
+			radioRefresh:SetValue(true)
+		end
+		Debug("New value for preference ", SkipLogicModule:GetSetting("preference"))
+		cbProcessUndercut:SetLabel(string.format("%s on undercut items", GREEN_FONT_COLOR:WrapTextInColorCode(type)))
+	end
+
+	radioSkip:SetCallback("OnValueChanged", function() handleSelect("SKIP") end)
+	radioRefresh:SetCallback("OnValueChanged", function() handleSelect("REFRESH") end)
+	groupSelectAction:AddChild(radioSkip)
+	groupSelectAction:AddChild(radioRefresh)
+
+	--------------------------------------------
+	moduleContainer:AddChild(cbMasterSwitch)
+	moduleContainer:AddChild(cbProcessUndercut)
+	moduleContainer:AddChild(restockGroup)
+	moduleContainer:AddChild(groupSelectAction)
 
 	container:AddChild(moduleContainer)
 
-	cbSkipEnabled:SetCallback("OnValueChanged", function(cb)
-		ImprovedSkip.widgetSettings.skipEnabled = cb:GetValue()
-		Debug("New value for skipEnabled ", ImprovedSkip.GetSetting("skipEnabled"))
-		cbSkipIfLeadSeller:SetLabel(skipIfLeadSellerLabel(ImprovedSkip.GetSetting("skipEnabled")))
+	cbMasterSwitch:SetCallback("OnValueChanged", function(cb)
+		SkipLogicModule:SetSetting("masterSwitch", cb:GetValue())
+		Debug("New value for masterSwitch ", SkipLogicModule:GetSetting("masterSwitch"))
 	end)
-	cbSkipToFirst:SetCallback("OnValueChanged", function(cb)
-		ImprovedSkip.widgetSettings.skipToFirst = cb:GetValue()
-		Debug("New value for skipToFirst ", ImprovedSkip.GetSetting("skipToFirst"))
+	cbProcessUndercut:SetCallback("OnValueChanged", function(cb)
+		SkipLogicModule:SetSetting("processNonUndercut", cb:GetValue())
+		Debug("New value for processNonUndercut ", SkipLogicModule:GetSetting("processUndercut"))
 	end)
-	cbSkipIfLeadSeller:SetCallback("OnValueChanged",
+	cbRestockEnabled:SetCallback("OnValueChanged",
 		function(cb)
-			self.widgetSettings.skipIfLeadSeller = cb:GetValue()
-			Debug("New value for skipIfLeadSeller ", ImprovedSkip.GetSetting("skipIfLeadSeller"))
-			addonNS.ImprovedQuantity.updateCbRestockLabel()
+			SkipLogicModule:SetSetting("restockEnabled", cb:GetValue())
+			Debug("New value for restockEnabled ", SkipLogicModule:GetSetting("restockEnabled"))
+
+			sliderRestock:SetDisabled(not SkipLogicModule:GetSetting("restockEnabled"))
 		end)
-end
-
-function ImprovedSkip.GetSetting(settingName)
-	return AuctionatorTools.db.profile.Selling.ImprovedSkip
-			[settingName]
-end
-
-function ImprovedSkip.InjectToAuctionator(originalMixin)
-	if not AuctionatorSaleItemMixin then
-		Debug("Couldn't find AuctionatorSaleItemMixin")
-		return
-	end
-	Debug("Setting auto select next to false")
-	Auctionator.Config.Set(Auctionator.Config.Options.SELLING_AUTO_SELECT_NEXT, false)
-
-
-	Debug("Injecting Improved Skip Functions")
-	function AuctionatorSaleItemMixin:GetFirstItem()
-		Debug("AuctionatorSaleItemMixin GetFirstItem()")
-		local firstItem = nil
-		local frame = AuctionatorSellingFrame
-		local bagListing = frame.BagListing
-		local bagListingView = bagListing.View
-		local bagListingViewGroups = bagListingView.groups
-		if bagListingViewGroups ~= nil then
-			for group in ipairs(bagListingViewGroups) do
-				if #bagListingViewGroups[group].buttons > 0 then
-					firstItem = bagListingViewGroups[group].buttons[1].key
-					break
-				end
-			end
-		end
-
-
-		return firstItem
-	end
-
-	function AuctionatorSaleItemMixin:GetLastItem()
-		Debug("AuctionatorSaleItemMixin GetLastItem()")
-		local lastItem = nil
-		local frame = AuctionatorSellingFrame
-		local bagListing = frame.BagListing
-		local bagListingView = bagListing.View
-		local bagListingViewGroups = bagListingView.groups
-
-		if bagListingViewGroups ~= nil then
-			-- Iterate through groups in reverse to find the last non-empty group
-			for i = #bagListingViewGroups, 1, -1 do
-				local buttons = bagListingViewGroups[i].buttons
-				if #buttons > 0 then
-					-- Get the last button from the group
-					lastItem = buttons[#buttons].key
-					break
-				end
-			end
-		end
-
-		return lastItem
-	end
-
-	function AuctionatorSaleItemMixin:UpdateSkipButton()
-		self.PostButton:SetSize(114, 22)
-		self.SkipButton:Show()
-	end
-
-	function AuctionatorSaleItemMixin:UpdateSkipButtonState()
-		if not self.SkipButton:IsShown() then
-			self.SkipButton:Show()
-			self.SkipButton:SetEnabled(true)
-		end
-		self.PrevButton:SetEnabled(self.PrevButton:IsShown() and self.prevItem)
-	end
-
-	-- Skip logic
-	function AuctionatorSaleItemMixin:SkipItem(itemID)
-		Debug("AuctionatorSaleItemMixin SkipItem(itemID)", itemID)
-		local SALE_ITEM_EVENTS = {
-			Auctionator.AH.Events.CommoditySearchResultsReady,
-			Auctionator.AH.Events.ItemSearchResultsReady,
-		}
-		local itemInfo = self.itemInfo or self.lastItemInfo
-
-		if itemID and itemInfo.itemID ~= itemID then return end
-
-		local isManualClick = not itemID
-
-		local isSkipEnabled = addonNS.ImprovedSkip.GetSetting("skipEnabled")
-
-		if isSkipEnabled or isManualClick then
-			-- Skip is enabled or skip button manually clicked
-			if itemInfo.nextItem then
-				Debug("Skipping to next item")
-				Auctionator.EventBus:Fire(
-					self, Auctionator.Selling.Events.BagItemRequest, itemInfo.nextItem
-				)
-				return
-			end
-			local lastItem = self:GetLastItem()
-
-			local atLastItem = lastItem and (lastItem.sortKey == itemInfo.sortKey)
-			if atLastItem and addonNS.ImprovedSkip.GetSetting("skipToFirst") then
-				-- if atLastItem
-				Debug("Skipping to first item")
-				local firstItem = self:GetFirstItem()
-				Auctionator.EventBus:Fire(
-					self, Auctionator.Selling.Events.BagItemRequest, firstItem
-				)
-
-				return
-			end
-		else
-			Debug("Skip disabled selecting last item")
-			-- Skip is disabled
-			Auctionator.EventBus:Fire(
-				self, Auctionator.Selling.Events.BagItemRequest, itemInfo.key
-			)
-			return
-		end
-	end
-
-	-- Skip if undercut
-	local ProcessCommodityResults_old = originalMixin.ProcessCommodityResults
-	function AuctionatorSaleItemMixin:ProcessCommodityResults(itemID, ...)
-		Debug("Processing commodity results", itemID)
-		ProcessCommodityResults_old(self, itemID, ...)
-		if addonNS.ImprovedSkip.GetSetting("skipIfLeadSeller") then
-			local result = self:GetCommodityResult(itemID)
-			Debug("checking if undercutted for" .. itemID)
-			if result and result.containsOwnerItem and result.owners[1] == "player" then
-				Debug("Auction not undercutted")
-				self:SkipItem(itemID)
-			else
-				Debug("Auction is undercutted")
-			end
-		end
-	end
-
-	local PostItem_old = originalMixin.PostItem
-
-	function AuctionatorSaleItemMixin:PostItem(confirmed)
-		Debug("AuctionatorSaleItemMixin PostItem(confirmed)", confirmed)
-		PostItem_old(self, confirmed)
-		local postedItemID = self.lastItemInfo.itemID
-		self:SkipItem(postedItemID)
-	end
+	sliderRestock:SetCallback("OnMouseUp", function(_, _, value)
+		SkipLogicModule:SetSetting("restockThreshold", value)
+		Debug("New value for restockThreshold ", SkipLogicModule:GetSetting("restockThreshold"))
+	end)
 end
 
 addonNS.ImprovedSkip = ImprovedSkip
