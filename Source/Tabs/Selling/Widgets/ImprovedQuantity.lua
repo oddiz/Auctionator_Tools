@@ -2,7 +2,7 @@ local _, addonNS = ...
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
 local ImprovedQuantity = {}
 
-local Debug = AuctionatorTools.Debug.Message
+local Debug = addonNS.Debug.Message
 
 function ImprovedQuantity:DrawWidget(container)
 	local moduleContainer = addonNS.CreateATWidget("Improved Quantity")

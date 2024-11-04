@@ -1,9 +1,18 @@
-function AuctionatorTools.Debug.IsOn()
-	return AuctionatorTools.Config.Debug
+local _, addonNS = ...
+addonNS.Debug = {}
+function addonNS.Debug.IsOn()
+	local debugOn = AuctionatorTools.db.global.Config.Debug
+	return debugOn
 end
 
-function AuctionatorTools.Debug.Message(message, ...)
-	if AuctionatorTools.Debug.IsOn() then
+function addonNS.Debug.SetOn(value)
+	local debugOn = AuctionatorTools.db.global.Config.Debug
+	debugOn = value
+	AuctionatorTools.db.global.Config.Debug = debugOn
+end
+
+function addonNS.Debug.Message(message, ...)
+	if addonNS.Debug.IsOn() then
 		print(GOLD_FONT_COLOR:WrapTextInColorCode(message), ...)
 
 		-- if any of the arguments are tables, pretty print them

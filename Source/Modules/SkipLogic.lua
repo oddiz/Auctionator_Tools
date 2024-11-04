@@ -23,7 +23,8 @@ local default_settings = setmetatable({
 	preference = "SKIP", -- "SKIP" or "REFRESH"
 }, { __newindex = function() error("Default settings are read-only") end })
 SkipLogic = {}
-local Debug = AuctionatorTools.Debug.Message
+local _, addonNS = ...
+local Debug = addonNS.Debug.Message
 function SkipLogic:OnEnable()
 	-- Initialize default values
 	if self.initialized then return end

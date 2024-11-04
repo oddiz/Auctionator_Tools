@@ -1,5 +1,4 @@
 AuctionatorTools = {
-	Debug = {},
 	mainFrame = nil,
 	Tabs = {
 		Shopping = {},
@@ -7,16 +6,17 @@ AuctionatorTools = {
 		Options = {
 			default = {}
 		}
-	},
-	Config = {
-		Debug = true
 	}
+
 }
 
 ATDB_Defaults = {
 	global = {
 		quantity = {
 
+		},
+		Config = {
+			Debug = false
 		}
 	},
 	profile = {

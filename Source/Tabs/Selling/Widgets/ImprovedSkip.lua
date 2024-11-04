@@ -2,7 +2,7 @@ local _, addonNS = ...
 local AceGUI = LibStub:GetLibrary("AceGUI-3.0")
 local ImprovedSkip = {}
 
-local Debug = AuctionatorTools.Debug.Message
+local Debug = addonNS.Debug.Message
 
 local function skipIfLeadSellerLabel(skipEnabled)
 	if skipEnabled then
