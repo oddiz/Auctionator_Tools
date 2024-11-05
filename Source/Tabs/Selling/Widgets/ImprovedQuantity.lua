@@ -104,7 +104,7 @@ function ImprovedQuantity.InjectToAuctionator(originalMixin)
 			self.SaveButton:SetText("Saved Qty - " .. customQuantity)
 			local result = self:GetCommodityResult(itemID)
 			Debug("checking if undercutted for" .. itemID)
-			if result and result.containsOwnerItem and result.owners[1] == "player" and AuctionatorTools.db.profile.Selling.ImprovedSkip.restockEnabled then
+			if result and result.containsOwnerItem and result.owners[1] == "player" and AuctionatorTools.db.profile.Selling.SkipLogic.restockEnabled then
 				Debug("Auction not undercutted")
 				self.Quantity:SetNumber(customQuantity - result.quantity)
 			else
