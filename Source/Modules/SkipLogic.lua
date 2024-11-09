@@ -175,13 +175,13 @@ function SkipLogic.InjectMethods()
 		Debug("AuctionatorSaleItemMixin PostItem()")
 		-- Unregister from the BagItemRequest event
 		Auctionator.EventBus:Unregister(self, {
-			Auctionator.Selling.Events.BagItemClicked
+			Auctionator.Selling.Events.BagItemRequest
 		})
 		originalPostItem(self, confirmed)
 
 		-- Register for the BagItemRequest event
 		Auctionator.EventBus:Register(self, {
-			Auctionator.Selling.Events.BagItemClicked
+			Auctionator.Selling.Events.BagItemRequest
 		})
 
 		-- Original post item deletes self.itemInfo and stores it in lastItemInfo
@@ -267,7 +267,6 @@ function SkipLogic.InjectMethods()
 		end
 	end
 
-	-- Replace original RefreshItem method
 	function AuctionatorSaleItemMixin:RefreshItem(itemInfo)
 		Debug("AuctionatorSaleItemMixin RefreshItem()")
 		if itemInfo == nil then
