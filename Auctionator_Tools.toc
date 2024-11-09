@@ -1,6 +1,6 @@
 ## Interface: 110000, 110005
 ## Title: Auctionator Tools
-## Version: v4
+## Version: v7.2
 ## Author: oddiz
 ## Notes: Some utilities to make your goblin life better.
 ## SavedVariables: AuctionatorToolsDB

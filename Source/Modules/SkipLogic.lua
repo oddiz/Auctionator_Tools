@@ -107,10 +107,15 @@ function SkipLogic:DoAction(itemInfo)
 end
 
 function SkipLogic:HandleUndercutItem(itemInfo)
-	-- do nothing
+	Debug("Handling undercut item")
+	local customQuantity = self.itemInfo and SkipLogic:GetSavedQuantity(self.itemInfo)
+	if customQuantity and customQuantity > 0 then
+		self.Quantity:SetNumber(customQuantity)
+	end
 end
 
 function SkipLogic:HandleNonUndercutItem(itemInfo, result)
+	Debug("Handling non-undercut item")
 	if self:GetSetting("restockEnabled") then
 		self:HandleRestockLogic(itemInfo, result.quantity)
 	else
@@ -119,6 +124,7 @@ function SkipLogic:HandleNonUndercutItem(itemInfo, result)
 end
 
 function SkipLogic:GetSavedQuantity(itemInfo)
+	if not itemInfo then return end
 	local qtyDB = AuctionatorTools.db.global.quantity
 	if qtyDB and itemInfo.itemID and qtyDB[itemInfo.itemID] then
 		return qtyDB[itemInfo.itemID]

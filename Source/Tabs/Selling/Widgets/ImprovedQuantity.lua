@@ -41,13 +41,6 @@ function ImprovedQuantity.SaveQuantity(itemID, amount)
 	end
 end
 
-function ImprovedQuantity.GetSavedQuantity(itemID)
-	local qtyDB = AuctionatorTools.db.global.quantity
-	if qtyDB and itemID then
-		return qtyDB[itemID]
-	end
-end
-
 function ImprovedQuantity.InjectToAuctionator(originalMixin)
 	local OnShow_org = originalMixin.OnShow
 
@@ -97,19 +90,10 @@ function ImprovedQuantity.InjectToAuctionator(originalMixin)
 	local SetQuantity_org = originalMixin.SetQuantity
 	function AuctionatorSaleItemMixin:SetQuantity()
 		if not self.itemInfo then return end
-		local itemID = self.itemInfo.itemID
 		local customQuantity = self.itemInfo and SkipLogic:GetSavedQuantity(self.itemInfo)
 
 		if customQuantity then
 			self.SaveButton:SetText("Saved Qty - " .. customQuantity)
-			local result = self:GetCommodityResult(itemID)
-			Debug("checking if undercutted for" .. itemID)
-			if result and result.containsOwnerItem and result.owners[1] == "player" and AuctionatorTools.db.profile.Selling.SkipLogic.restockEnabled then
-				Debug("Auction not undercutted")
-				self.Quantity:SetNumber(customQuantity - result.quantity)
-			else
-				self.Quantity:SetNumber(customQuantity)
-			end
 		else
 			self.SaveButton:SetText("Save Quantity")
 			SetQuantity_org(self)
